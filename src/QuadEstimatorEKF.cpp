@@ -107,6 +107,7 @@ void QuadEstimatorEKF::UpdateFromIMU(V3F accel, V3F gyro)
   /////////////////////////////// END STUDENT CODE ////////////////////////////
 
   // CALCULATE UPDATE
+  // Assumption: No net force and no acceleration
   accelRoll = atan2f(accel.y, accel.z);
   accelPitch = atan2f(-accel.x, 9.81f);
 
@@ -173,9 +174,9 @@ VectorXf QuadEstimatorEKF::PredictState(VectorXf curState, float dt, V3F accel, 
   Mat3x3F R = attitude.RotationMatrix_IwrtB();
   V3F accel_i = R * accel;
   
-  predictedState(3) = curState(3) + accel_i.x;
-  predictedState(4) = curState(4) + accel_i.y;
-  predictedState(5) = curState(5) - CONST_GRAVITY * dt + accel_i.z;
+  predictedState(3) = curState(3) + dt * accel_i.x;
+  predictedState(4) = curState(4) + dt * accel_i.y;
+  predictedState(5) = curState(5) - CONST_GRAVITY * dt + dt * accel_i.z;
     
   /////////////////////////////// END STUDENT CODE ////////////////////////////
 
@@ -258,9 +259,11 @@ void QuadEstimatorEKF::Predict(float dt, V3F accel, V3F gyro)
   gPrime(0, 3) = dt;
   gPrime(1, 4) = dt;
   gPrime(2, 5) = dt;
+  
   gPrime(3, 6) = dt * (RbgPrime(0) * accel).sum();
   gPrime(4, 6) = dt * (RbgPrime(1) * accel).sum();
   gPrime(5, 6) = dt * (RbgPrime(2) * accel).sum();
+  
   ekfCov = gPrime * ekfCov * gPrime.transpose() + Q;
 
   /////////////////////////////// END STUDENT CODE ////////////////////////////
